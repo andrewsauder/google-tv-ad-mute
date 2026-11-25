@@ -8,12 +8,13 @@ ad-mute mutes the TV during ad breaks in streaming apps on an Onn Google TV box.
 | Pluto TV | `tv.pluto.android` | The app log marks the start and the end of each ad break. |
 | YouTube | `com.google.android.youtube.tv` | The media session shows no ad. While YouTube plays, ad-mute captures the screen and looks for the word **Sponsored** in the ad overlay. |
 | Tubi | `com.tubitv` | The media session shows no ad. While Tubi plays, ad-mute captures the screen and looks for the words **This ad will end in** in the ad label at the top left. |
+| Google TV Freeplay | `com.google.android.apps.tv.launcherx` | Freeplay channels play in the Google TV home screen app, which has no media session. While the home screen app holds the audio focus, ad-mute captures the screen and looks for the countdown ring of the ad break at the top right. |
 
 ## Files
 
 - `luckfox/`: the ad-mute program for the board, its settings file, and its start scripts. `luckfox/src` holds the Go source.
 - `Deploy-Luckfox.ps1`: installs or updates ad-mute on the board.
-- `ad-mute.ps1`: the same muting from a Windows PC, for tests. It does not check YouTube or Tubi.
+- `ad-mute.ps1`: the same muting from a Windows PC, for tests. It does not check YouTube, Tubi or Google TV Freeplay.
 - `Capture-AdTest.ps1`: records the screen, media session and log of an app, to find the ad marker of a new app.
 
 ## Deploy to the Luckfox board
@@ -93,7 +94,7 @@ To restart ad-mute, run `/etc/init.d/S99ad-mute restart` on the board, or `syste
 
 ```text
 --- Deployed Wed Nov 25 20:14:58 UTC 2026
-2026/11/25 20:15:02 Watching com.cbs.ott, tv.pluto.android, com.google.android.youtube.tv, com.tubitv on 192.168.1.154:5555
+2026/11/25 20:15:02 Watching com.cbs.ott, tv.pluto.android, com.google.android.youtube.tv, com.tubitv, com.google.android.apps.tv.launcherx on 192.168.1.154:5555
 2026/11/25 20:15:02 Connected to 192.168.1.154:5555
 2026/11/25 20:29:50 Ad started in tv.pluto.android: muted
 2026/11/25 20:32:20 Show resumed: unmuted
@@ -199,9 +200,28 @@ adb pull /sdcard/ad-mute-screen.png
 - If an ad shows no such label, or shows other words, ad-mute misses the ad. A new app version can make this change. Make a new capture with `Capture-AdTest.ps1 -Screenshot`.
 - While the show is paused, Tubi can show a still ad with **Press any button to close the ad**. No sound plays then, so ad-mute does not mute.
 
+**Google TV Freeplay:**
+
+```powershell
+adb shell "dumpsys audio | grep -A10 'Audio Focus stack entries' | grep ' -- pack: '"
+adb shell screencap -p /sdcard/ad-mute-screen.png
+adb pull /sdcard/ad-mute-screen.png
+```
+
+- The first command lists the apps that asked for the audio focus. The last line is the app that holds it. While a channel plays, that line must show `pack: com.google.android.apps.tv.launcherx`. ad-mute captures the screen only then.
+- If the first command shows no lines, or another app, while a channel plays, ad-mute misses Freeplay ads. Save the output of `adb shell dumpsys audio` while a channel plays. A fix of the check needs this output.
+- Open `ad-mute-screen.png`. The video is not part of a screen capture, so the screen of a show is blank. During an ad break, the top right shows a ring with the time left in the break, such as **1:37**.
+- If an ad break shows no ring, or shows it in another place, ad-mute misses the ad. A new version of the home screen app can make this change. Make a new capture with `Capture-AdTest.ps1 -Screenshot`.
+
+These Freeplay cases have limits:
+
+- The ring hides while the channel banner or the player controls show. The banner shows for a few seconds after each channel change. ad-mute unmutes while the ring hides, and mutes again when the ring comes back.
+- In the channel guide, the channel preview can play an ad with sound. The capture has no guide screen from an ad break, so it does not show if the guide has the ring.
+- Nobody tested the Freeplay check on the box yet. The audio focus command, and the time the ring takes to show and to hide at the start and the end of a break, are not confirmed.
+
 ### Test from the PC
 
-`ad-mute.ps1` does the same checks from the PC and prints each event in its window. It does not check YouTube or Tubi. Stop ad-mute on the board first. Two copies send two mute key presses, which cancel each other out.
+`ad-mute.ps1` does the same checks from the PC and prints each event in its window. It does not check YouTube, Tubi or Google TV Freeplay. Stop ad-mute on the board first. Two copies send two mute key presses, which cancel each other out.
 
 ```powershell
 ssh root@192.168.1.60 /etc/init.d/S99ad-mute stop

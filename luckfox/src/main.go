@@ -1,9 +1,12 @@
 // ad-mute: mutes the TV during streaming ads on the Onn box.
 // Port of ad-mute.ps1 that needs no adb install: it speaks the ADB
 // protocol over TCP itself, so it runs as one static binary on the Luckfox.
+// It watches Paramount+ and YouTube by default. See youtube.go for the
+// YouTube check.
 package main
 
 import (
+	"bytes"
 	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
@@ -208,17 +211,29 @@ func dialADB(target string, key *rsa.PrivateKey) (*adbConn, error) {
 
 // shell runs a command and returns its output.
 func (a *adbConn) shell(cmd string) (string, error) {
+	out, err := a.run("shell:" + cmd)
+	return string(out), err
+}
+
+// exec runs a command and returns its output unchanged, for binary output
+// such as a screen capture.
+func (a *adbConn) exec(cmd string) ([]byte, error) {
+	return a.run("exec:" + cmd)
+}
+
+// run opens an ADB service and returns all of its output.
+func (a *adbConn) run(service string) ([]byte, error) {
 	local := a.nextID
 	a.nextID++
-	if err := a.send(cmdOPEN, local, 0, []byte("shell:"+cmd+"\x00")); err != nil {
-		return "", err
+	if err := a.send(cmdOPEN, local, 0, []byte(service+"\x00")); err != nil {
+		return nil, err
 	}
-	var out strings.Builder
+	var out bytes.Buffer
 	var remote uint32
 	for {
 		m, err := a.recv(15 * time.Second)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 		if m.arg1 != local { // stale packet from an earlier stream
 			continue
@@ -230,29 +245,100 @@ func (a *adbConn) shell(cmd string) (string, error) {
 			remote = m.arg0
 			out.Write(m.data)
 			if err := a.send(cmdOKAY, local, remote, nil); err != nil {
-				return "", err
+				return nil, err
 			}
 		case cmdCLSE:
 			if m.arg0 == 0 {
-				return "", errors.New("TV refused the shell command")
+				return nil, errors.New("TV refused the shell command")
 			}
 			a.send(cmdCLSE, local, m.arg0, nil)
-			return out.String(), nil
+			return out.Bytes(), nil
 		}
 	}
 }
 
 func (a *adbConn) Close() { a.c.Close() }
 
-// ---------- ad muting ----------
+// ---------- ad detection ----------
 
-func isAd(line string) bool {
-	return strings.Contains(line, "{state=PLAYING") && strings.Contains(line, "speed=0.0,")
+// playbackStates maps each package in a dumpsys media_session dump to the
+// PlaybackState line of its first media session that has one.
+func playbackStates(dump string) map[string]string {
+	states := map[string]string{}
+	owner := ""
+	for _, line := range strings.Split(dump, "\n") {
+		line = strings.TrimSpace(line)
+		switch {
+		case strings.HasPrefix(line, "package="):
+			owner = strings.TrimPrefix(line, "package=")
+		case owner != "" && strings.HasPrefix(line, "state=PlaybackState"):
+			if _, ok := states[owner]; !ok {
+				states[owner] = line
+			}
+			owner = ""
+		}
+	}
+	return states
 }
+
+func isPlaying(line string) bool {
+	return strings.Contains(line, "{state=PLAYING")
+}
+
+// speedZeroAd reports whether a PlaybackState line shows an ad. During an ad,
+// Paramount+ reports state PLAYING with playback speed 0.0.
+func speedZeroAd(line string) bool {
+	return isPlaying(line) && strings.Contains(line, "speed=0.0,")
+}
+
+// adPlaying reports whether the app plays an ad. YouTube needs a screen
+// capture. All other apps use the speed rule of Paramount+.
+func adPlaying(conn *adbConn, pkg, line string) (bool, error) {
+	if pkg == youTubePackage {
+		if !isPlaying(line) {
+			return false, nil
+		}
+		return youTubeAdOnScreen(conn)
+	}
+	return speedZeroAd(line), nil
+}
+
+// findAd returns the first package in pkgs that plays an ad, or "".
+func findAd(conn *adbConn, pkgs []string) (string, error) {
+	dump, err := conn.shell("dumpsys media_session")
+	if err != nil {
+		return "", err
+	}
+	states := playbackStates(dump)
+	for _, pkg := range pkgs {
+		ad, err := adPlaying(conn, pkg, states[pkg])
+		if err != nil {
+			return "", err
+		}
+		if ad {
+			return pkg, nil
+		}
+	}
+	return "", nil
+}
+
+// splitPackages returns the packages of a comma-separated list.
+func splitPackages(list string) []string {
+	var pkgs []string
+	for _, p := range strings.Split(list, ",") {
+		if p = strings.TrimSpace(p); p != "" {
+			pkgs = append(pkgs, p)
+		}
+	}
+	return pkgs
+}
+
+// ---------- ad muting ----------
 
 func main() {
 	target := flag.String("target", "", "Onn box address, e.g. 192.168.1.50:5555 (required)")
-	pkg := flag.String("package", "com.cbs.ott", "app package to watch (Paramount+ is com.cbs.ott)")
+	pkgList := flag.String("package", "com.cbs.ott,"+youTubePackage,
+		"comma-separated app packages to watch (Paramount+ is com.cbs.ott, YouTube is "+youTubePackage+")")
 	unmuteAfter := flag.Int("unmute-after", 2, "non-ad readings in a row before unmuting")
 	interval := flag.Duration("interval", 500*time.Millisecond, "time between readings")
 	keyPath := flag.String("key", "/etc/ad-mute/adbkey", "where to keep this device's ADB key")
@@ -266,12 +352,16 @@ func main() {
 	if !strings.Contains(*target, ":") {
 		*target += ":5555"
 	}
+	pkgs := splitPackages(*pkgList)
+	if len(pkgs) == 0 {
+		fmt.Fprintln(os.Stderr, "ad-mute: -package needs at least one app package")
+		os.Exit(2)
+	}
 	key, err := loadOrCreateKey(*keyPath)
 	if err != nil {
 		log.Fatalf("ADB key: %v", err)
 	}
 
-	query := fmt.Sprintf("dumpsys media_session | grep -A20 'package=%s' | grep -m1 'state=PlaybackState'", *pkg)
 	var conn *adbConn
 	muted, showCount := false, 0
 
@@ -283,7 +373,7 @@ func main() {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 
-	log.Printf("Watching %s on %s", *pkg, *target)
+	log.Printf("Watching %s on %s", strings.Join(pkgs, ", "), *target)
 	tick := time.NewTicker(*interval)
 	defer tick.Stop()
 	for {
@@ -307,7 +397,7 @@ func main() {
 			log.Printf("Connected to %s", *target)
 		}
 
-		line, err := conn.shell(query)
+		adPkg, err := findAd(conn, pkgs)
 		if err != nil {
 			log.Printf("Lost connection: %v", err)
 			conn.Close()
@@ -315,12 +405,12 @@ func main() {
 			continue
 		}
 
-		if isAd(line) {
+		if adPkg != "" {
 			showCount = 0
 			if !muted {
 				if err := toggle(); err == nil {
 					muted = true
-					log.Printf("Ad started: muted")
+					log.Printf("Ad started in %s: muted", adPkg)
 				}
 			}
 		} else if muted {

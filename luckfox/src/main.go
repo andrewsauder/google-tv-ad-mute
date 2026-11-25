@@ -21,6 +21,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -244,15 +245,115 @@ func (a *adbConn) shell(cmd string) (string, error) {
 
 func (a *adbConn) Close() { a.c.Close() }
 
-// ---------- ad muting ----------
+// ---------- ad detection ----------
 
+// A detector reads the ad state of one app from the output of one shell command.
+type detector struct {
+	pkg     string
+	command string
+	isAd    func(out string) bool
+}
+
+func newDetector(pkg string) detector {
+	if pkg == plutoPackage {
+		return detector{pkg: pkg, command: plutoCommand, isAd: plutoAdPlaying}
+	}
+	return detector{pkg: pkg, command: mediaSessionCommand(pkg), isAd: isAd}
+}
+
+// mediaSessionCommand prints the PlaybackState line of the media session of the app.
+func mediaSessionCommand(pkg string) string {
+	return fmt.Sprintf("dumpsys media_session | grep -A20 'package=%s' | grep -m1 'state=PlaybackState'", pkg)
+}
+
+// isAd reads a PlaybackState line. During an ad, Paramount+ reports state
+// PLAYING with playback speed 0.0.
 func isAd(line string) bool {
 	return strings.Contains(line, "{state=PLAYING") && strings.Contains(line, "speed=0.0,")
 }
 
+// Pluto TV keeps its media session at PLAYING, speed 1.0, during an ad, so the
+// session tells nothing. The app log marks each ad break instead:
+//
+//	Emitting an analytic event: slotStart        the ad break starts
+//	consumeID3: ID3Tag(creativeId=...)           an ad plays (every 3 to 8 seconds)
+//	Emitting an analytic event: OnAdPodComplete  the ad break ends
+//	Emitting an analytic event: slotEnd          the ad break ends
+//
+// The log tag of these lines is an obfuscated class name, so only the text is matched.
+const (
+	plutoPackage = "tv.pluto.android"
+
+	plutoBreakStart = "Emitting an analytic event: slotStart"
+	plutoAdTag      = "consumeID3: ID3Tag("
+	plutoPodDone    = "Emitting an analytic event: OnAdPodComplete"
+	plutoBreakEnd   = "Emitting an analytic event: slotEnd"
+
+	// plutoAdHold is how long one ad line keeps the ad state when no newer line
+	// comes. It guards against a missed end line, for example when the app
+	// closes mid-ad. The longest gap between ad lines in the capture was 7.6 s.
+	plutoAdHold = 35 * time.Second
+)
+
+// plutoCommand prints the device time as "now=<epoch seconds>" and then the
+// Pluto TV ad lines of the last 40 seconds, each led by its epoch time.
+// It prints nothing when the app is not running.
+const plutoCommand = "p=$(pidof -s " + plutoPackage + ") || exit 0; n=$(date +%s); echo now=$n; " +
+	"logcat -d -b main -v epoch --pid=$p -t $((n-40)).000 " +
+	"-e 'consumeID3: ID3Tag|Emitting an analytic event: (slotStart|slotEnd|OnAdPodComplete)'"
+
+// plutoAdPlaying reads the output of plutoCommand. The last ad line decides:
+// an end line means the show plays, and a start line or an ID3 line means an
+// ad plays, unless that line is older than plutoAdHold.
+func plutoAdPlaying(out string) bool {
+	now, lastAd := -1.0, 0.0
+	inAd := false
+	for _, line := range strings.Split(out, "\n") {
+		line = strings.TrimSpace(line)
+		if v, ok := strings.CutPrefix(line, "now="); ok {
+			if t, err := strconv.ParseFloat(v, 64); err == nil {
+				now = t
+			}
+			continue
+		}
+		fields := strings.Fields(line)
+		if len(fields) == 0 {
+			continue
+		}
+		t, err := strconv.ParseFloat(fields[0], 64)
+		if err != nil {
+			continue // a header such as "--------- beginning of main"
+		}
+		switch {
+		case strings.Contains(line, plutoBreakEnd), strings.Contains(line, plutoPodDone):
+			inAd = false
+		case strings.Contains(line, plutoBreakStart), strings.Contains(line, plutoAdTag):
+			inAd, lastAd = true, t
+		}
+	}
+	return now > 0 && inAd && now-lastAd <= plutoAdHold.Seconds()
+}
+
+// adApp returns the package of the first app that plays an ad, or "" if none does.
+func adApp(conn *adbConn, detectors []detector) (string, error) {
+	for _, d := range detectors {
+		out, err := conn.shell(d.command)
+		if err != nil {
+			return "", err
+		}
+		if d.isAd(out) {
+			return d.pkg, nil
+		}
+	}
+	return "", nil
+}
+
+// ---------- ad muting ----------
+
 func main() {
 	target := flag.String("target", "", "Onn box address, e.g. 192.168.1.50:5555 (required)")
-	pkg := flag.String("package", "com.cbs.ott", "app package to watch (Paramount+ is com.cbs.ott)")
+	pkgs := flag.String("package", "com.cbs.ott,"+plutoPackage,
+		"comma-separated app packages to watch (Paramount+ is com.cbs.ott, Pluto TV is "+plutoPackage+")")
 	unmuteAfter := flag.Int("unmute-after", 2, "non-ad readings in a row before unmuting")
 	interval := flag.Duration("interval", 500*time.Millisecond, "time between readings")
 	keyPath := flag.String("key", "/etc/ad-mute/adbkey", "where to keep this device's ADB key")
@@ -266,12 +367,23 @@ func main() {
 	if !strings.Contains(*target, ":") {
 		*target += ":5555"
 	}
+	var detectors []detector
+	var names []string
+	for _, p := range strings.Split(*pkgs, ",") {
+		if p = strings.TrimSpace(p); p != "" {
+			detectors = append(detectors, newDetector(p))
+			names = append(names, p)
+		}
+	}
+	if len(detectors) == 0 {
+		fmt.Fprintln(os.Stderr, "ad-mute: -package needs at least one app package")
+		os.Exit(2)
+	}
 	key, err := loadOrCreateKey(*keyPath)
 	if err != nil {
 		log.Fatalf("ADB key: %v", err)
 	}
 
-	query := fmt.Sprintf("dumpsys media_session | grep -A20 'package=%s' | grep -m1 'state=PlaybackState'", *pkg)
 	var conn *adbConn
 	muted, showCount := false, 0
 
@@ -283,7 +395,7 @@ func main() {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 
-	log.Printf("Watching %s on %s", *pkg, *target)
+	log.Printf("Watching %s on %s", strings.Join(names, ", "), *target)
 	tick := time.NewTicker(*interval)
 	defer tick.Stop()
 	for {
@@ -307,7 +419,7 @@ func main() {
 			log.Printf("Connected to %s", *target)
 		}
 
-		line, err := conn.shell(query)
+		app, err := adApp(conn, detectors)
 		if err != nil {
 			log.Printf("Lost connection: %v", err)
 			conn.Close()
@@ -315,12 +427,12 @@ func main() {
 			continue
 		}
 
-		if isAd(line) {
+		if app != "" {
 			showCount = 0
 			if !muted {
 				if err := toggle(); err == nil {
 					muted = true
-					log.Printf("Ad started: muted")
+					log.Printf("Ad started in %s: muted", app)
 				}
 			}
 		} else if muted {

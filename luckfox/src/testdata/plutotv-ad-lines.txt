@@ -1,0 +1,130 @@
+11-24 20:29:12.927 V/df8     (15860): consumeProgress: VodProgress(positionMillis=625646, contentId=6924978453126d02e28c5a16)
+11-24 20:29:33.108 V/df8     (15860): consumeProgress: VodProgress(positionMillis=645834, contentId=6924978453126d02e28c5a16)
+11-24 20:29:49.652 V/df8     (15860): consumeID3: ID3Tag(creativeId=6ae6f18138567de3a2c53ded, currentIndexSec=0, maximumIndexSec=30, typeFlags=[GENERIC_WTA, START_OF_MEDIA])
+11-24 20:29:49.675 D/df8     (15860): Emitting an analytic event: slotStart
+11-24 20:29:49.691 D/df8     (15860): Emitting an analytic event: OMSDK
+11-24 20:29:49.820 D/df8     (15860): Emitting an analytic event: impression
+11-24 20:29:49.978 D/df8     (15860): Emitting an analytic event: start
+11-24 20:29:53.146 V/df8     (15860): consumeProgress: VodProgress(positionMillis=665863, contentId=6924978453126d02e28c5a16)
+11-24 20:29:56.647 V/df8     (15860): consumeID3: ID3Tag(creativeId=6ae6f18138567de3a2c53ded, currentIndexSec=5, maximumIndexSec=30, typeFlags=[QUARTILE_FIRST])
+11-24 20:29:56.653 D/df8     (15860): Emitting an analytic event: firstQuartile
+11-24 20:30:04.154 V/df8     (15860): consumeID3: ID3Tag(creativeId=6ae6f18138567de3a2c53ded, currentIndexSec=15, maximumIndexSec=30, typeFlags=[QUARTILE_MIDDLE])
+11-24 20:30:04.160 D/df8     (15860): Emitting an analytic event: midpoint
+11-24 20:30:11.666 V/df8     (15860): consumeID3: ID3Tag(creativeId=6ae6f18138567de3a2c53ded, currentIndexSec=20, maximumIndexSec=30, typeFlags=[QUARTILE_THIRD])
+11-24 20:30:11.679 D/df8     (15860): Emitting an analytic event: thirdQuartile
+11-24 20:30:13.170 V/df8     (15860): consumeProgress: VodProgress(positionMillis=685890, contentId=6924978453126d02e28c5a16)
+11-24 20:30:19.191 V/df8     (15860): consumeID3: ID3Tag(creativeId=6ae6f18138567de3a2c53ded, currentIndexSec=30, maximumIndexSec=30, typeFlags=[QUARTILE_END])
+11-24 20:30:19.218 D/df8     (15860): Emitting an analytic event: complete
+11-24 20:30:19.751 V/df8     (15860): consumeID3: ID3Tag(creativeId=6aee05a74c8eb2ae947faf2f, currentIndexSec=0, maximumIndexSec=15, typeFlags=[GENERIC_WTA, START_OF_MEDIA])
+11-24 20:30:19.787 D/df8     (15860): Emitting an analytic event: OMSDK
+11-24 20:30:19.789 D/df8     (15860): Emitting an analytic event: impression
+11-24 20:30:19.798 D/df8     (15860): Emitting an analytic event: start
+11-24 20:30:23.683 V/df8     (15860): consumeID3: ID3Tag(creativeId=6aee05a74c8eb2ae947faf2f, currentIndexSec=0, maximumIndexSec=15, typeFlags=[QUARTILE_FIRST])
+11-24 20:30:23.697 D/df8     (15860): Emitting an analytic event: firstQuartile
+11-24 20:30:27.198 V/df8     (15860): consumeID3: ID3Tag(creativeId=6aee05a74c8eb2ae947faf2f, currentIndexSec=5, maximumIndexSec=15, typeFlags=[QUARTILE_MIDDLE])
+11-24 20:30:27.210 D/df8     (15860): Emitting an analytic event: midpoint
+11-24 20:30:31.220 V/df8     (15860): consumeID3: ID3Tag(creativeId=6aee05a74c8eb2ae947faf2f, currentIndexSec=10, maximumIndexSec=15, typeFlags=[QUARTILE_THIRD])
+11-24 20:30:31.230 D/df8     (15860): Emitting an analytic event: thirdQuartile
+11-24 20:30:33.216 V/df8     (15860): consumeProgress: VodProgress(positionMillis=705999, contentId=6924978453126d02e28c5a16)
+11-24 20:30:34.661 V/df8     (15860): consumeID3: ID3Tag(creativeId=6aee05a74c8eb2ae947faf2f, currentIndexSec=10, maximumIndexSec=15, typeFlags=[QUARTILE_END])
+11-24 20:30:34.663 V/df8     (15860): consumeID3: ID3Tag(creativeId=6ae21dc8bcdd24c67da77ee6, currentIndexSec=0, maximumIndexSec=15, typeFlags=[GENERIC_WTA, START_OF_MEDIA])
+11-24 20:30:34.675 D/df8     (15860): Emitting an analytic event: complete
+11-24 20:30:34.717 D/df8     (15860): Emitting an analytic event: OMSDK
+11-24 20:30:34.719 D/df8     (15860): Emitting an analytic event: impression
+11-24 20:30:34.750 D/df8     (15860): Emitting an analytic event: start
+11-24 20:30:38.442 V/df8     (15860): consumeID3: ID3Tag(creativeId=6ae21dc8bcdd24c67da77ee6, currentIndexSec=0, maximumIndexSec=15, typeFlags=[QUARTILE_FIRST])
+11-24 20:30:38.472 D/df8     (15860): Emitting an analytic event: firstQuartile
+11-24 20:30:41.779 V/df8     (15860): consumeID3: ID3Tag(creativeId=6ae21dc8bcdd24c67da77ee6, currentIndexSec=5, maximumIndexSec=15, typeFlags=[QUARTILE_MIDDLE])
+11-24 20:30:41.781 D/df8     (15860): Emitting an analytic event: midpoint
+11-24 20:30:45.773 V/df8     (15860): consumeID3: ID3Tag(creativeId=6ae21dc8bcdd24c67da77ee6, currentIndexSec=10, maximumIndexSec=15, typeFlags=[QUARTILE_THIRD])
+11-24 20:30:45.779 D/df8     (15860): Emitting an analytic event: thirdQuartile
+11-24 20:30:49.279 V/df8     (15860): consumeID3: ID3Tag(creativeId=6ae21dc8bcdd24c67da77ee6, currentIndexSec=10, maximumIndexSec=15, typeFlags=[QUARTILE_END])
+11-24 20:30:49.297 D/df8     (15860): Emitting an analytic event: complete
+11-24 20:30:49.680 V/df8     (15860): consumeID3: ID3Tag(creativeId=6aea7482e7366eb27679bc6c, currentIndexSec=0, maximumIndexSec=30, typeFlags=[GENERIC_WTA, START_OF_MEDIA])
+11-24 20:30:49.711 D/df8     (15860): Emitting an analytic event: OMSDK
+11-24 20:30:49.713 D/df8     (15860): Emitting an analytic event: impression
+11-24 20:30:49.729 D/df8     (15860): Emitting an analytic event: start
+11-24 20:30:53.286 V/df8     (15860): consumeProgress: VodProgress(positionMillis=726028, contentId=6924978453126d02e28c5a16)
+11-24 20:30:57.285 V/df8     (15860): consumeID3: ID3Tag(creativeId=6aea7482e7366eb27679bc6c, currentIndexSec=5, maximumIndexSec=30, typeFlags=[QUARTILE_FIRST])
+11-24 20:30:57.304 D/df8     (15860): Emitting an analytic event: firstQuartile
+11-24 20:31:04.298 V/df8     (15860): consumeID3: ID3Tag(creativeId=6aea7482e7366eb27679bc6c, currentIndexSec=15, maximumIndexSec=30, typeFlags=[QUARTILE_MIDDLE])
+11-24 20:31:04.325 D/df8     (15860): Emitting an analytic event: midpoint
+11-24 20:31:11.789 V/df8     (15860): consumeID3: ID3Tag(creativeId=6aea7482e7366eb27679bc6c, currentIndexSec=20, maximumIndexSec=30, typeFlags=[QUARTILE_THIRD])
+11-24 20:31:11.807 D/df8     (15860): Emitting an analytic event: thirdQuartile
+11-24 20:31:13.305 V/df8     (15860): consumeProgress: VodProgress(positionMillis=746048, contentId=6924978453126d02e28c5a16)
+11-24 20:31:19.311 V/df8     (15860): consumeID3: ID3Tag(creativeId=6aea7482e7366eb27679bc6c, currentIndexSec=25, maximumIndexSec=30, typeFlags=[QUARTILE_END])
+11-24 20:31:19.318 D/df8     (15860): Emitting an analytic event: complete
+11-24 20:31:19.731 V/df8     (15860): consumeID3: ID3Tag(creativeId=6a70196528bfcba2bb7c1513, currentIndexSec=0, maximumIndexSec=30, typeFlags=[GENERIC_WTA, START_OF_MEDIA])
+11-24 20:31:19.742 D/df8     (15860): Emitting an analytic event: OMSDK
+11-24 20:31:19.747 D/df8     (15860): Emitting an analytic event: impression
+11-24 20:31:19.758 D/df8     (15860): Emitting an analytic event: start
+11-24 20:31:26.823 V/df8     (15860): consumeID3: ID3Tag(creativeId=6a70196528bfcba2bb7c1513, currentIndexSec=5, maximumIndexSec=30, typeFlags=[QUARTILE_FIRST])
+11-24 20:31:26.829 D/df8     (15860): Emitting an analytic event: firstQuartile
+11-24 20:31:33.327 V/df8     (15860): consumeProgress: VodProgress(positionMillis=766066, contentId=6924978453126d02e28c5a16)
+11-24 20:31:34.324 V/df8     (15860): consumeID3: ID3Tag(creativeId=6a70196528bfcba2bb7c1513, currentIndexSec=15, maximumIndexSec=30, typeFlags=[QUARTILE_MIDDLE])
+11-24 20:31:34.332 D/df8     (15860): Emitting an analytic event: midpoint
+11-24 20:31:41.826 V/df8     (15860): consumeID3: ID3Tag(creativeId=6a70196528bfcba2bb7c1513, currentIndexSec=20, maximumIndexSec=30, typeFlags=[QUARTILE_THIRD])
+11-24 20:31:41.836 D/df8     (15860): Emitting an analytic event: thirdQuartile
+11-24 20:31:49.345 V/df8     (15860): consumeID3: ID3Tag(creativeId=6a70196528bfcba2bb7c1513, currentIndexSec=30, maximumIndexSec=30, typeFlags=[QUARTILE_END])
+11-24 20:31:49.359 D/df8     (15860): Emitting an analytic event: complete
+11-24 20:31:49.787 V/df8     (15860): consumeID3: ID3Tag(creativeId=6a063016c3e138f7b43e46ee, currentIndexSec=0, maximumIndexSec=15, typeFlags=[GENERIC_WTA, START_OF_MEDIA])
+11-24 20:31:49.796 D/df8     (15860): Emitting an analytic event: OMSDK
+11-24 20:31:49.798 D/df8     (15860): Emitting an analytic event: impression
+11-24 20:31:49.804 D/df8     (15860): Emitting an analytic event: start
+11-24 20:31:53.534 V/df8     (15860): consumeID3: ID3Tag(creativeId=6a063016c3e138f7b43e46ee, currentIndexSec=0, maximumIndexSec=15, typeFlags=[QUARTILE_FIRST])
+11-24 20:31:53.565 D/df8     (15860): Emitting an analytic event: firstQuartile
+11-24 20:31:56.852 V/df8     (15860): consumeID3: ID3Tag(creativeId=6a063016c3e138f7b43e46ee, currentIndexSec=5, maximumIndexSec=15, typeFlags=[QUARTILE_MIDDLE])
+11-24 20:31:56.865 D/df8     (15860): Emitting an analytic event: midpoint
+11-24 20:32:00.857 V/df8     (15860): consumeID3: ID3Tag(creativeId=6a063016c3e138f7b43e46ee, currentIndexSec=10, maximumIndexSec=15, typeFlags=[QUARTILE_THIRD])
+11-24 20:32:00.874 D/df8     (15860): Emitting an analytic event: thirdQuartile
+11-24 20:32:04.366 V/df8     (15860): consumeID3: ID3Tag(creativeId=6a063016c3e138f7b43e46ee, currentIndexSec=10, maximumIndexSec=15, typeFlags=[QUARTILE_END])
+11-24 20:32:04.372 D/df8     (15860): Emitting an analytic event: complete
+11-24 20:32:04.712 V/df8     (15860): consumeID3: ID3Tag(creativeId=6af5f062a87ca2ebab4ef84f, currentIndexSec=0, maximumIndexSec=15, typeFlags=[GENERIC_WTA, START_OF_MEDIA])
+11-24 20:32:04.733 D/df8     (15860): Emitting an analytic event: OMSDK
+11-24 20:32:04.738 D/df8     (15860): Emitting an analytic event: impression
+11-24 20:32:04.743 D/df8     (15860): Emitting an analytic event: start
+11-24 20:32:08.638 V/df8     (15860): consumeID3: ID3Tag(creativeId=6af5f062a87ca2ebab4ef84f, currentIndexSec=0, maximumIndexSec=15, typeFlags=[QUARTILE_FIRST])
+11-24 20:32:08.668 D/df8     (15860): Emitting an analytic event: firstQuartile
+11-24 20:32:11.863 V/df8     (15860): consumeID3: ID3Tag(creativeId=6af5f062a87ca2ebab4ef84f, currentIndexSec=5, maximumIndexSec=15, typeFlags=[QUARTILE_MIDDLE])
+11-24 20:32:11.876 D/df8     (15860): Emitting an analytic event: midpoint
+11-24 20:32:15.855 V/df8     (15860): consumeID3: ID3Tag(creativeId=6af5f062a87ca2ebab4ef84f, currentIndexSec=10, maximumIndexSec=15, typeFlags=[QUARTILE_THIRD])
+11-24 20:32:15.859 D/df8     (15860): Emitting an analytic event: thirdQuartile
+11-24 20:32:19.362 V/df8     (15860): consumeID3: ID3Tag(creativeId=6af5f062a87ca2ebab4ef84f, currentIndexSec=15, maximumIndexSec=15, typeFlags=[QUARTILE_END])
+11-24 20:32:19.370 D/df8     (15860): Emitting an analytic event: complete
+11-24 20:32:19.374 D/df8     (15860): Emitting an analytic event: OnAdPodComplete
+11-24 20:32:19.378 D/df8     (15860): Emitting an analytic event: slotEnd
+11-24 20:33:26.937 V/df8     (15860): consumeID3: ID3Tag(creativeId=6ae6ca2c2622292a6707e773, currentIndexSec=0, maximumIndexSec=15, typeFlags=[GENERIC_WTA, START_OF_MEDIA])
+11-24 20:33:26.941 D/df8     (15860): Emitting an analytic event: slotStart
+11-24 20:33:26.942 D/df8     (15860): Emitting an analytic event: OMSDK
+11-24 20:33:26.947 D/df8     (15860): Emitting an analytic event: impression
+11-24 20:33:26.952 D/df8     (15860): Emitting an analytic event: start
+11-24 20:33:30.713 V/df8     (15860): consumeID3: ID3Tag(creativeId=6ae6ca2c2622292a6707e773, currentIndexSec=0, maximumIndexSec=15, typeFlags=[QUARTILE_FIRST])
+11-24 20:33:30.738 D/df8     (15860): Emitting an analytic event: firstQuartile
+11-24 20:33:34.154 V/df8     (15860): consumeID3: ID3Tag(creativeId=6ae6ca2c2622292a6707e773, currentIndexSec=5, maximumIndexSec=15, typeFlags=[QUARTILE_MIDDLE])
+11-24 20:33:34.165 D/df8     (15860): Emitting an analytic event: midpoint
+11-24 20:33:38.146 V/df8     (15860): consumeID3: ID3Tag(creativeId=6ae6ca2c2622292a6707e773, currentIndexSec=10, maximumIndexSec=15, typeFlags=[QUARTILE_THIRD])
+11-24 20:33:38.151 D/df8     (15860): Emitting an analytic event: thirdQuartile
+11-24 20:33:41.966 V/df8     (15860): consumeID3: ID3Tag(creativeId=6ae6ca2c2622292a6707e773, currentIndexSec=10, maximumIndexSec=15, typeFlags=[QUARTILE_END])
+11-24 20:33:41.967 V/df8     (15860): consumeID3: ID3Tag(creativeId=68daceb82ffcfe2069e0617a, currentIndexSec=0, maximumIndexSec=30, typeFlags=[GENERIC_WTA, START_OF_MEDIA])
+11-24 20:33:41.981 D/df8     (15860): Emitting an analytic event: complete
+11-24 20:33:41.984 D/df8     (15860): Emitting an analytic event: OMSDK
+11-24 20:33:41.986 D/df8     (15860): Emitting an analytic event: impression
+11-24 20:33:41.997 D/df8     (15860): Emitting an analytic event: start
+11-24 20:33:49.162 V/df8     (15860): consumeID3: ID3Tag(creativeId=68daceb82ffcfe2069e0617a, currentIndexSec=5, maximumIndexSec=30, typeFlags=[QUARTILE_FIRST])
+11-24 20:33:49.168 D/df8     (15860): Emitting an analytic event: firstQuartile
+11-24 20:33:56.674 V/df8     (15860): consumeID3: ID3Tag(creativeId=68daceb82ffcfe2069e0617a, currentIndexSec=10, maximumIndexSec=30, typeFlags=[QUARTILE_MIDDLE])
+11-24 20:33:56.677 D/df8     (15860): Emitting an analytic event: midpoint
+11-24 20:34:04.189 V/df8     (15860): consumeID3: ID3Tag(creativeId=68daceb82ffcfe2069e0617a, currentIndexSec=20, maximumIndexSec=30, typeFlags=[QUARTILE_THIRD])
+11-24 20:34:04.195 D/df8     (15860): Emitting an analytic event: thirdQuartile
+11-24 20:34:11.710 V/df8     (15860): consumeID3: ID3Tag(creativeId=68daceb82ffcfe2069e0617a, currentIndexSec=25, maximumIndexSec=30, typeFlags=[QUARTILE_END])
+11-24 20:34:11.728 D/df8     (15860): Emitting an analytic event: complete
+11-24 20:34:11.980 V/df8     (15860): consumeID3: ID3Tag(creativeId=6ae85386a843784b4774fd54, currentIndexSec=0, maximumIndexSec=15, typeFlags=[GENERIC_WTA, START_OF_MEDIA])
+11-24 20:34:11.986 D/df8     (15860): Emitting an analytic event: OMSDK
+11-24 20:34:11.987 D/df8     (15860): Emitting an analytic event: impression
+11-24 20:34:11.994 D/df8     (15860): Emitting an analytic event: start
+11-24 20:34:15.805 V/df8     (15860): consumeID3: ID3Tag(creativeId=6ae85386a843784b4774fd54, currentIndexSec=0, maximumIndexSec=15, typeFlags=[QUARTILE_FIRST])
+11-24 20:34:15.823 D/df8     (15860): Emitting an analytic event: firstQuartile
+11-24 20:34:19.187 V/df8     (15860): consumeID3: ID3Tag(creativeId=6ae85386a843784b4774fd54, currentIndexSec=5, maximumIndexSec=15, typeFlags=[QUARTILE_MIDDLE])
+11-24 20:34:19.195 D/df8     (15860): Emitting an analytic event: midpoint
+11-24 20:34:23.194 V/df8     (15860): consumeID3: ID3Tag(creativeId=6ae85386a843784b4774fd54, currentIndexSec=10, maximumIndexSec=15, typeFlags=[QUARTILE_THIRD])
+11-24 20:34:23.200 D/df8     (15860): Emitting an analytic event: thirdQuartile

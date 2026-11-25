@@ -217,7 +217,7 @@ These Freeplay cases have limits:
 
 - The ring hides while the channel banner or the player controls show. The banner shows for a few seconds after each channel change. ad-mute unmutes while the ring hides, and mutes again when the ring comes back.
 - In the channel guide, the channel preview can play an ad with sound. The capture has no guide screen from an ad break, so it does not show if the guide has the ring.
-- Nobody tested the Freeplay check on the box yet. The audio focus command, and the time the ring takes to show and to hide at the start and the end of a break, are not confirmed.
+- The audio focus command works on the box. The time the ring takes to show and to hide at the start and the end of a break is not confirmed.
 
 ### Test from the PC
 

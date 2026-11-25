@@ -112,10 +112,10 @@ func TestFreeplayCountdownLookalikes(t *testing.T) {
 	}
 }
 
-// The audio focus lines follow the format of the Android audio service. The
-// capture has no dumpsys audio output, so these lines are not from the box.
+// focusLauncher is the output of freeplayCommand on the box while a Freeplay
+// channel played. The other lines copy its format.
 const (
-	focusLauncher = "  source:android.os.BinderProxy@5d8c1a2 -- pack: com.google.android.apps.tv.launcherx -- client: android.media.AudioManager@548ba23obb@e557e64 -- gain: GAIN -- flags:  -- loss: none -- notified: false -- limbofalse -- uid: 10048 -- attr: AudioAttributes: usage=USAGE_MEDIA content=CONTENT_TYPE_UNKNOWN flags=0x800 tags= bundle=null -- sdk:36\n"
+	focusLauncher = "source:android.os.BinderProxy@7caead4 -- pack: com.google.android.apps.tv.launcherx -- client: android.media.AudioManager@548ba23obb@dbb5fbe -- gain: GAIN -- flags: DELAY_OK -- loss: none -- notified: true -- limbofalse -- uid: 10048 -- attr: AudioAttributes: usage=USAGE_MEDIA content=CONTENT_TYPE_UNKNOWN flags=0x1C00 tags= bundle=null -- sdk:36\n"
 	focusTubi     = "  source:android.os.BinderProxy@1f0e7d3 -- pack: com.tubitv -- client: android.media.AudioManager@9a1c2b4 -- gain: GAIN -- flags:  -- loss: none -- notified: false -- limbofalse -- uid: 10078 -- attr: AudioAttributes: usage=USAGE_MEDIA content=CONTENT_TYPE_MOVIE flags=0x800 tags= bundle=null -- sdk:34\n"
 	focusOther    = "  source:android.os.BinderProxy@77aa001 -- pack: com.google.android.apps.tv.launcherx.extra -- client: x -- gain: GAIN -- flags:  -- loss: none -- uid: 10099\n"
 )

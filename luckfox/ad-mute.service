@@ -1,0 +1,13 @@
+[Unit]
+Description=Mute TV during streaming ads
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+EnvironmentFile=/etc/ad-mute.conf
+ExecStart=/usr/bin/ad-mute -target ${ONN_TARGET} -package ${PACKAGE}
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

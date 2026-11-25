@@ -1,7 +1,7 @@
 // ad-mute: mutes the TV during streaming ads on the Onn box.
 // Port of ad-mute.ps1 that needs no adb install: it speaks the ADB
 // protocol over TCP itself, so it runs as one static binary on the Luckfox.
-// See youtube.go for the YouTube check.
+// See youtube.go and tubi.go for the YouTube and Tubi checks.
 package main
 
 import (
@@ -280,6 +280,8 @@ func newDetector(pkg string) detector {
 		return detector{pkg: pkg, command: plutoCommand, isAd: plutoAdPlaying}
 	case youTubePackage:
 		return detector{pkg: pkg, command: mediaSessionCommand(pkg), isAd: isPlaying, onScreen: hasSponsoredLabel}
+	case tubiPackage:
+		return detector{pkg: pkg, command: mediaSessionCommand(pkg), isAd: isPlaying, onScreen: hasTubiAdLabel}
 	}
 	return detector{pkg: pkg, command: mediaSessionCommand(pkg), isAd: isAd}
 }
@@ -373,7 +375,7 @@ func adApp(conn *adbConn, detectors []detector) (string, error) {
 			continue
 		}
 		if d.onScreen != nil {
-			ad, err := screenShows(conn, d.onScreen)
+			ad, err := screenShows(conn, d.pkg, d.onScreen)
 			if err != nil {
 				return "", err
 			}
@@ -391,8 +393,8 @@ var screenWarned bool
 
 // screenShows captures the screen and passes it to onScreen. It returns an
 // error only when the connection fails. A capture that does not decode counts
-// as no ad.
-func screenShows(conn *adbConn, onScreen func(img image.Image) bool) (bool, error) {
+// as no ad. pkg names the app in the warning.
+func screenShows(conn *adbConn, pkg string, onScreen func(img image.Image) bool) (bool, error) {
 	data, err := conn.exec("screencap -p")
 	if err != nil {
 		return false, err
@@ -400,7 +402,7 @@ func screenShows(conn *adbConn, onScreen func(img image.Image) bool) (bool, erro
 	img, err := png.Decode(bytes.NewReader(data))
 	if err != nil {
 		if !screenWarned {
-			log.Printf("Can't read the screen capture, so YouTube ads stay unmuted: %v", err)
+			log.Printf("Can't read the screen capture, so ads in %s stay unmuted: %v", pkg, err)
 			screenWarned = true
 		}
 		return false, nil
@@ -413,9 +415,9 @@ func screenShows(conn *adbConn, onScreen func(img image.Image) bool) (bool, erro
 
 func main() {
 	target := flag.String("target", "", "Onn box address, e.g. 192.168.1.50:5555 (required)")
-	pkgs := flag.String("package", "com.cbs.ott,"+plutoPackage+","+youTubePackage,
+	pkgs := flag.String("package", "com.cbs.ott,"+plutoPackage+","+youTubePackage+","+tubiPackage,
 		"comma-separated app packages to watch (Paramount+ is com.cbs.ott, Pluto TV is "+plutoPackage+
-			", YouTube is "+youTubePackage+")")
+			", YouTube is "+youTubePackage+", Tubi is "+tubiPackage+")")
 	unmuteAfter := flag.Int("unmute-after", 2, "non-ad readings in a row before unmuting")
 	interval := flag.Duration("interval", 500*time.Millisecond, "time between readings")
 	keyPath := flag.String("key", "/etc/ad-mute/adbkey", "where to keep this device's ADB key")

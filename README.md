@@ -7,12 +7,13 @@ ad-mute mutes the TV during ad breaks in streaming apps on an Onn Google TV box.
 | Paramount+ | `com.cbs.ott` | The media session of the app reports state `PLAYING` with speed `0.0`. |
 | Pluto TV | `tv.pluto.android` | The app log marks the start and the end of each ad break. |
 | YouTube | `com.google.android.youtube.tv` | The media session shows no ad. While YouTube plays, ad-mute captures the screen and looks for the word **Sponsored** in the ad overlay. |
+| Tubi | `com.tubitv` | The media session shows no ad. While Tubi plays, ad-mute captures the screen and looks for the words **This ad will end in** in the ad label at the top left. |
 
 ## Files
 
 - `luckfox/`: the ad-mute program for the board, its settings file, and its start scripts. `luckfox/src` holds the Go source.
 - `Deploy-Luckfox.ps1`: installs or updates ad-mute on the board.
-- `ad-mute.ps1`: the same muting from a Windows PC, for tests. It does not check YouTube.
+- `ad-mute.ps1`: the same muting from a Windows PC, for tests. It does not check YouTube or Tubi.
 - `Capture-AdTest.ps1`: records the screen, media session and log of an app, to find the ad marker of a new app.
 
 ## Deploy to the Luckfox board
@@ -92,7 +93,7 @@ To restart ad-mute, run `/etc/init.d/S99ad-mute restart` on the board, or `syste
 
 ```text
 --- Deployed Wed Nov 25 20:14:58 UTC 2026
-2026/11/25 20:15:02 Watching com.cbs.ott, tv.pluto.android, com.google.android.youtube.tv on 192.168.1.154:5555
+2026/11/25 20:15:02 Watching com.cbs.ott, tv.pluto.android, com.google.android.youtube.tv, com.tubitv on 192.168.1.154:5555
 2026/11/25 20:15:02 Connected to 192.168.1.154:5555
 2026/11/25 20:29:50 Ad started in tv.pluto.android: muted
 2026/11/25 20:32:20 Show resumed: unmuted
@@ -119,7 +120,7 @@ To restart ad-mute, run `/etc/init.d/S99ad-mute restart` on the board, or `syste
 | `Can't reach Onn box: dial tcp ...: i/o timeout` | Nothing answers at that address. The box is off, or its IP address changed. | Turn on the box, or update `ONN_TARGET` and deploy again. |
 | `Can't reach Onn box: unexpected ADB reply 534c5453 during connect` | The box asks for an encrypted (TLS) connection. ad-mute supports only plain ADB. | See [Fix an encrypted connection](#fix-an-encrypted-connection). |
 | `Lost connection: ...` | The connection to the box dropped. ad-mute connects again at the next check. | Nothing, unless the line repeats. Then look for a `Can't reach` line. |
-| `Can't read the screen capture, so YouTube ads stay unmuted: ...` | The box sent a screen capture that ad-mute cannot decode. ad-mute counts it as no ad. It writes the line again only after a good capture. | Check the YouTube screen capture. See [Check what ad-mute sees](#check-what-ad-mute-sees). |
+| `Can't read the screen capture, so ads in <app> stay unmuted: ...` | The box sent a screen capture that ad-mute cannot decode. ad-mute counts it as no ad. It writes the line again only after a good capture. | Check the screen capture of the app. See [Check what ad-mute sees](#check-what-ad-mute-sees). |
 | `ad-mute: -target is required (Onn box IP:port)` | `ONN_TARGET` in `/etc/ad-mute.conf` is empty. | Set `ONN_TARGET`, and deploy again. |
 | `Watching ...` repeats every few seconds | ad-mute stops right after it starts, and the start script starts it again. | Read the line before each `Watching` line for the cause. |
 
@@ -185,9 +186,22 @@ adb pull /sdcard/ad-mute-screen.png
 - Open `ad-mute-screen.png`. The video is not part of a screen capture, so the screen of a show is blank. During an ad, the bottom left shows the advertiser and the word **Sponsored**.
 - If an ad shows no **Sponsored** word, or shows it in another place or language, ad-mute misses the ad. A new app version can make this change. Make a new capture with `Capture-AdTest.ps1 -Screenshot`.
 
+**Tubi:**
+
+```powershell
+adb shell "dumpsys media_session | grep -A20 'package=com.tubitv' | grep -m1 'state=PlaybackState'"
+adb shell screencap -p /sdcard/ad-mute-screen.png
+adb pull /sdcard/ad-mute-screen.png
+```
+
+- The first command must show `state=PLAYING(3)`, during the show and during an ad. ad-mute captures the screen only then.
+- Open `ad-mute-screen.png`. The video is not part of a screen capture, so the screen of a show is blank, apart from a short rating label. During an ad, the top left shows a gray label, such as **Ad 1 of 3. This ad will end in 00:05**.
+- If an ad shows no such label, or shows other words, ad-mute misses the ad. A new app version can make this change. Make a new capture with `Capture-AdTest.ps1 -Screenshot`.
+- While the show is paused, Tubi can show a still ad with **Press any button to close the ad**. No sound plays then, so ad-mute does not mute.
+
 ### Test from the PC
 
-`ad-mute.ps1` does the same checks from the PC and prints each event in its window. It does not check YouTube. Stop ad-mute on the board first. Two copies send two mute key presses, which cancel each other out.
+`ad-mute.ps1` does the same checks from the PC and prints each event in its window. It does not check YouTube or Tubi. Stop ad-mute on the board first. Two copies send two mute key presses, which cancel each other out.
 
 ```powershell
 ssh root@192.168.1.60 /etc/init.d/S99ad-mute stop

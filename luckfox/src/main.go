@@ -1,9 +1,11 @@
 // ad-mute: mutes the TV during streaming ads on the Onn box.
 // Port of ad-mute.ps1 that needs no adb install: it speaks the ADB
 // protocol over TCP itself, so it runs as one static binary on the Luckfox.
+// See youtube.go for the YouTube check.
 package main
 
 import (
+	"bytes"
 	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
@@ -14,6 +16,8 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"image"
+	"image/png"
 	"io"
 	"log"
 	"math/big"
@@ -209,17 +213,29 @@ func dialADB(target string, key *rsa.PrivateKey) (*adbConn, error) {
 
 // shell runs a command and returns its output.
 func (a *adbConn) shell(cmd string) (string, error) {
+	out, err := a.run("shell:" + cmd)
+	return string(out), err
+}
+
+// exec runs a command and returns its output unchanged, for binary output
+// such as a screen capture.
+func (a *adbConn) exec(cmd string) ([]byte, error) {
+	return a.run("exec:" + cmd)
+}
+
+// run opens an ADB service and returns all of its output.
+func (a *adbConn) run(service string) ([]byte, error) {
 	local := a.nextID
 	a.nextID++
-	if err := a.send(cmdOPEN, local, 0, []byte("shell:"+cmd+"\x00")); err != nil {
-		return "", err
+	if err := a.send(cmdOPEN, local, 0, []byte(service+"\x00")); err != nil {
+		return nil, err
 	}
-	var out strings.Builder
+	var out bytes.Buffer
 	var remote uint32
 	for {
 		m, err := a.recv(15 * time.Second)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 		if m.arg1 != local { // stale packet from an earlier stream
 			continue
@@ -231,14 +247,14 @@ func (a *adbConn) shell(cmd string) (string, error) {
 			remote = m.arg0
 			out.Write(m.data)
 			if err := a.send(cmdOKAY, local, remote, nil); err != nil {
-				return "", err
+				return nil, err
 			}
 		case cmdCLSE:
 			if m.arg0 == 0 {
-				return "", errors.New("TV refused the shell command")
+				return nil, errors.New("TV refused the shell command")
 			}
 			a.send(cmdCLSE, local, m.arg0, nil)
-			return out.String(), nil
+			return out.Bytes(), nil
 		}
 	}
 }
@@ -248,15 +264,22 @@ func (a *adbConn) Close() { a.c.Close() }
 // ---------- ad detection ----------
 
 // A detector reads the ad state of one app from the output of one shell command.
+// If onScreen is set, the detector also captures the screen when isAd is true,
+// and only onScreen decides. isAd then only rules out times with no ad, such as
+// a pause.
 type detector struct {
-	pkg     string
-	command string
-	isAd    func(out string) bool
+	pkg      string
+	command  string
+	isAd     func(out string) bool
+	onScreen func(img image.Image) bool
 }
 
 func newDetector(pkg string) detector {
-	if pkg == plutoPackage {
+	switch pkg {
+	case plutoPackage:
 		return detector{pkg: pkg, command: plutoCommand, isAd: plutoAdPlaying}
+	case youTubePackage:
+		return detector{pkg: pkg, command: mediaSessionCommand(pkg), isAd: isPlaying, onScreen: hasSponsoredLabel}
 	}
 	return detector{pkg: pkg, command: mediaSessionCommand(pkg), isAd: isAd}
 }
@@ -266,10 +289,15 @@ func mediaSessionCommand(pkg string) string {
 	return fmt.Sprintf("dumpsys media_session | grep -A20 'package=%s' | grep -m1 'state=PlaybackState'", pkg)
 }
 
+// isPlaying reads a PlaybackState line. It is true while the app plays.
+func isPlaying(line string) bool {
+	return strings.Contains(line, "{state=PLAYING")
+}
+
 // isAd reads a PlaybackState line. During an ad, Paramount+ reports state
 // PLAYING with playback speed 0.0.
 func isAd(line string) bool {
-	return strings.Contains(line, "{state=PLAYING") && strings.Contains(line, "speed=0.0,")
+	return isPlaying(line) && strings.Contains(line, "speed=0.0,")
 }
 
 // Pluto TV keeps its media session at PLAYING, speed 1.0, during an ad, so the
@@ -341,19 +369,53 @@ func adApp(conn *adbConn, detectors []detector) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		if d.isAd(out) {
-			return d.pkg, nil
+		if !d.isAd(out) {
+			continue
 		}
+		if d.onScreen != nil {
+			ad, err := screenShows(conn, d.onScreen)
+			if err != nil {
+				return "", err
+			}
+			if !ad {
+				continue
+			}
+		}
+		return d.pkg, nil
 	}
 	return "", nil
+}
+
+// screenWarned stops a repeat of the same warning at each check.
+var screenWarned bool
+
+// screenShows captures the screen and passes it to onScreen. It returns an
+// error only when the connection fails. A capture that does not decode counts
+// as no ad.
+func screenShows(conn *adbConn, onScreen func(img image.Image) bool) (bool, error) {
+	data, err := conn.exec("screencap -p")
+	if err != nil {
+		return false, err
+	}
+	img, err := png.Decode(bytes.NewReader(data))
+	if err != nil {
+		if !screenWarned {
+			log.Printf("Can't read the screen capture, so YouTube ads stay unmuted: %v", err)
+			screenWarned = true
+		}
+		return false, nil
+	}
+	screenWarned = false
+	return onScreen(img), nil
 }
 
 // ---------- ad muting ----------
 
 func main() {
 	target := flag.String("target", "", "Onn box address, e.g. 192.168.1.50:5555 (required)")
-	pkgs := flag.String("package", "com.cbs.ott,"+plutoPackage,
-		"comma-separated app packages to watch (Paramount+ is com.cbs.ott, Pluto TV is "+plutoPackage+")")
+	pkgs := flag.String("package", "com.cbs.ott,"+plutoPackage+","+youTubePackage,
+		"comma-separated app packages to watch (Paramount+ is com.cbs.ott, Pluto TV is "+plutoPackage+
+			", YouTube is "+youTubePackage+")")
 	unmuteAfter := flag.Int("unmute-after", 2, "non-ad readings in a row before unmuting")
 	interval := flag.Duration("interval", 500*time.Millisecond, "time between readings")
 	keyPath := flag.String("key", "/etc/ad-mute/adbkey", "where to keep this device's ADB key")

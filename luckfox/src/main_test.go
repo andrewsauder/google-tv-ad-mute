@@ -11,6 +11,9 @@ import (
 
 func TestPubKeyMatchesRealAdb(t *testing.T) {
 	ref := os.Getenv("REFKEY")
+	if ref == "" {
+		t.Skip("set REFKEY to the path of an adbkey made by real adb")
+	}
 	k, err := loadOrCreateKey(ref)
 	if err != nil {
 		t.Fatal(err)
@@ -72,14 +75,25 @@ func TestProtocolAgainstFakeTV(t *testing.T) {
 			t.Fatalf("shell: %q %v", out, err)
 		}
 	}
+	if out, err := a.exec("screencap -p"); err != nil || string(out) != "out:exec:s" {
+		t.Fatalf("exec: %q %v", out, err)
+	}
 	a.Close()
 }
 
+// The Paramount+ media dumps are not in the repository. Copy them to the
+// repository root to run this test.
 func TestIsAd(t *testing.T) {
-	for _, c := range []struct{ f string; ad bool }{
+	for _, c := range []struct {
+		f  string
+		ad bool
+	}{
 		{"show1", false}, {"ad1", true}, {"ad2", true}, {"show2", false},
 	} {
-		b, _ := os.ReadFile("../../paramount-" + c.f + "-media.txt")
+		b, err := os.ReadFile("../../paramount-" + c.f + "-media.txt")
+		if err != nil {
+			t.Skipf("no Paramount+ capture: %v", err)
+		}
 		s := string(b)
 		i := strings.Index(s, "package=com.cbs.ott")
 		j := strings.Index(s[i:], "state=PlaybackState")

@@ -1,7 +1,8 @@
 // ad-mute: mutes the TV during streaming ads on the Onn box.
 // Port of ad-mute.ps1 that needs no adb install: it speaks the ADB
 // protocol over TCP itself, so it runs as one static binary on the Luckfox.
-// See youtube.go and tubi.go for the YouTube and Tubi checks.
+// See youtube.go, tubi.go and freeplay.go for the YouTube, Tubi and Google TV
+// Freeplay checks.
 package main
 
 import (
@@ -282,6 +283,8 @@ func newDetector(pkg string) detector {
 		return detector{pkg: pkg, command: mediaSessionCommand(pkg), isAd: isPlaying, onScreen: hasSponsoredLabel}
 	case tubiPackage:
 		return detector{pkg: pkg, command: mediaSessionCommand(pkg), isAd: isPlaying, onScreen: hasTubiAdLabel}
+	case freeplayPackage:
+		return detector{pkg: pkg, command: freeplayCommand, isAd: freeplayPlaying, onScreen: hasFreeplayCountdown}
 	}
 	return detector{pkg: pkg, command: mediaSessionCommand(pkg), isAd: isAd}
 }
@@ -415,9 +418,10 @@ func screenShows(conn *adbConn, pkg string, onScreen func(img image.Image) bool)
 
 func main() {
 	target := flag.String("target", "", "Onn box address, e.g. 192.168.1.50:5555 (required)")
-	pkgs := flag.String("package", "com.cbs.ott,"+plutoPackage+","+youTubePackage+","+tubiPackage,
+	pkgs := flag.String("package", "com.cbs.ott,"+plutoPackage+","+youTubePackage+","+tubiPackage+","+freeplayPackage,
 		"comma-separated app packages to watch (Paramount+ is com.cbs.ott, Pluto TV is "+plutoPackage+
-			", YouTube is "+youTubePackage+", Tubi is "+tubiPackage+")")
+			", YouTube is "+youTubePackage+", Tubi is "+tubiPackage+
+			", Google TV Freeplay is "+freeplayPackage+")")
 	unmuteAfter := flag.Int("unmute-after", 2, "non-ad readings in a row before unmuting")
 	interval := flag.Duration("interval", 500*time.Millisecond, "time between readings")
 	keyPath := flag.String("key", "/etc/ad-mute/adbkey", "where to keep this device's ADB key")

@@ -121,7 +121,7 @@ func TestNewDetectorYouTube(t *testing.T) {
 		t.Errorf("YouTube must use the media session and the screen: %q", d.command)
 	}
 	if newDetector("com.cbs.ott").onScreen != nil || newDetector(plutoPackage).onScreen != nil {
-		t.Error("only YouTube and Tubi need a screen capture")
+		t.Error("only YouTube, Tubi and Freeplay need a screen capture")
 	}
 }
 
